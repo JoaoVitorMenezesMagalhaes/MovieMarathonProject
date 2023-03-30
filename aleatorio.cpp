@@ -31,37 +31,9 @@ bool compare_movies_by_end_time(const movies& a, const movies& b) {
     return a.end_time < b.end_time;
 }
 
-vector<movies> greedy_algorithm(vector<movies>& vector_movies, vector<int>& max_movies_per_cat) {
+vector<movies> random_algorithm(vector<movies>& vector_movies, vector<int>& max_movies_per_cat) {
     vector<movies> selected_movies;
     bitset<24> timestamp_bitset;
-
-    // Ordena os filmes por ordem crescente de tempo de término
-    sort(vector_movies.begin(), vector_movies.end(), compare_movies_by_end_time);
-
-    for (int i = 0; i < vector_movies.size(); i++) {
-        // Verifica se o filme começa antes do horário final mais cedo já reservado
-        if (vector_movies[i].start_time < timestamp_bitset._Find_first()) {
-            continue;
-        }
-
-        // Verifica se há capacidade na categoria do filme
-        int category_count = count_if(selected_movies.begin(), selected_movies.end(),
-            [&vector_movies, &i](const movies& m) { return m.category == vector_movies[i].category; });
-
-        if (category_count >= max_movies_per_cat[vector_movies[i].category]) {
-            continue;
-        }
-
-        // Verifica se o horário do filme está disponível
-        if ((timestamp_bitset & reserve_movie_time(bitset<24>(), vector_movies[i].start_time, vector_movies[i].end_time)).any()) {
-            continue;
-        }
-
-        // Se todas as condições forem satisfeitas, reserva o horário para o filme
-        timestamp_bitset = reserve_movie_time(timestamp_bitset, vector_movies[i].start_time, vector_movies[i].end_time);
-        selected_movies.push_back(vector_movies[i]);
-        max_movies_per_cat[vector_movies[i].category]++;
-    }
 
     return selected_movies;
 }
@@ -108,7 +80,7 @@ int main(int argc, char* argv[]) {
 
     sort(vector_movies.begin(), vector_movies.end(), compare_movies_by_end_time);
 
-    vector<movies> selected_movies = greedy_algorithm(vector_movies, max_movies_per_cat);
+    vector<movies> selected_movies = random_algorithm(vector_movies, max_movies_per_cat);
 
     cout << selected_movies.size() << endl;
 
