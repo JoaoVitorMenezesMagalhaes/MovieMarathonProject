@@ -4,6 +4,8 @@
 #include <bitset>
 #include <vector>
 #include <algorithm>
+#include <chrono>
+#include <random>
 
 
 using namespace std;
@@ -31,9 +33,46 @@ bool compare_movies_by_end_time(const movies& a, const movies& b) {
     return a.end_time < b.end_time;
 }
 
-vector<movies> random_algorithm(vector<movies>& vector_movies, vector<int>& max_movies_per_cat) {
+
+bool check_movie_time(bitset<24>& timestamp_bitset, movies movie){
+    for (int i = movie.start_time; i < movie.end_time; i++){
+        if (timestamp_bitset[i] == 1){
+            return false;
+        }
+    }
+    return true;
+}
+
+vector<movies> random_algorithm(vector<movies> vector_movies, vector<int> max_movies_per_cat) {
+
     vector<movies> selected_movies;
     bitset<24> timestamp_bitset;
+
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator (seed);
+    
+    normal_distribution<double> distribution(0, 1.0);
+
+    for (int i = 0; i < vector_movies.size(); i++) {
+        double random_number = distribution(generator);
+
+        if (random_number <= 0.25){
+            int random_index = rand() % vector_movies.size();
+            if (check_movie_time(timestamp_bitset, vector_movies[random_index]) == true && max_movies_per_cat[vector_movies[random_index].category-1] > 0) {
+                selected_movies.push_back(vector_movies[random_index]);
+                timestamp_bitset = reserve_movie_time(timestamp_bitset, vector_movies[random_index].start_time, vector_movies[random_index].end_time);
+                max_movies_per_cat[vector_movies[random_index].category-1]--;
+            }
+        }else {
+            if (max_movies_per_cat[vector_movies[i].category-1] > 0) {
+                if (check_movie_time(timestamp_bitset, vector_movies[i]) == true) {
+                    selected_movies.push_back(vector_movies[i]);
+                    timestamp_bitset = reserve_movie_time(timestamp_bitset, vector_movies[i].start_time, vector_movies[i].end_time);
+                    max_movies_per_cat[vector_movies[i].category-1]--;
+                }
+            }
+        }
+    }
 
     return selected_movies;
 }
@@ -82,7 +121,7 @@ int main(int argc, char* argv[]) {
 
     vector<movies> selected_movies = random_algorithm(vector_movies, max_movies_per_cat);
 
-    cout << selected_movies.size() << endl;
+    cout << "Total filmes: " << selected_movies.size() << endl;
 
     for (int i = 0; i < selected_movies.size(); i++) {
         cout << selected_movies[i].start_time << " " << selected_movies[i].end_time << " " << selected_movies[i].category << endl;
